@@ -50,7 +50,7 @@ public static class TelegramBot
 
     private async static Task HandleUpdate(ITelegramBotClient TBClient, Update update, CancellationToken ct)
     {
-        if (!update.IsMessageType()) return;
+        if (!update.IsMessageType() || update?.Message?.Text == null) return;
 
         var msg = update.Message.Text.ToLower().Trim();
 
@@ -78,8 +78,11 @@ public static class TelegramBot
         if (saturdayCouples.Count() == 0)
             sb.Append("Пары ИФМОИОТ'а отсутствуют.\nДобби свободен.");
         else
+        {
+            sb.Append("Найдены пары в субботу\n");
             foreach (var i in saturdayCouples)
                 sb.Append($"- - - - -\n{i.Time} || {i.Course}-{i.Group}\n{i.Title}\n\n");
+        }
 
         await TBClient.SendTextMessageAsync(update.GetChatID(), sb.ToString());
     }
@@ -104,8 +107,8 @@ public static class TelegramBot
     private static bool IsMessageType(this Update update) => update.Type == Telegram.Bot.Types.Enums.UpdateType.Message;
     private static bool IsCallbackType(this Update update) => update.Type == Telegram.Bot.Types.Enums.UpdateType.CallbackQuery;
 
-    private static Task HandleError(ITelegramBotClient tbc, Exception e, CancellationToken ct)
+    private static void HandleError(ITelegramBotClient tbc, Exception e, CancellationToken ct)
     {
-        throw new NotImplementedException();
+        Console.WriteLine($"Error >> Ошибка бота: {e.Message}");
     }
 }
