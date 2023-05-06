@@ -1,37 +1,50 @@
 ﻿using System;
 using System.Threading;
-using System.Linq;
-using System.Text.RegularExpressions;
 using CheckSaturday;
-using static System.Console;
-using CheckSaturday.InstituteParsers;
 
 
-ScheduleDownloader.CheckUpdate();
-CoupleSchedule.Update(ScheduleDownloader.CacheDir);
+
+
+if (args.Length != 1) throw new Exception("Не указан токен для бота.");
+SetUpdateScheduleTimer();
 
 while (CoupleSchedule.Couples is null) Thread.Sleep(100);
+TelegramBot.Start(args[0]);
 
-var saturdayCouples = CoupleSchedule.Couples.Where(x => x.Day.ToLower().Contains("субб") && ActualAuditNumber(x));
-
-var maxDate = CoupleSchedule.Couples.Max(x => x.Date);
-
-WriteLine($"Расписание актуально до: {maxDate.ToString("d")}\n");
-
-if (saturdayCouples.Count() == 0)
-    WriteLine("Добби свободен");
-else
-    foreach(var i in saturdayCouples)
-        WriteLine($"{i.Time}\t {i.Course}-{i.Group}\t {i.Title}");
-
-
-
-bool ActualAuditNumber(ClassInfo c)
+Console.WriteLine("Press 'q' to stop program and exit...");
+while (true)
 {
-    var posibleNumbers = new string[] { "152", "151", "153", "156" };
+    var key = Console.ReadKey();
+    if (key.Key == ConsoleKey.Q) return;
+}
 
-    var adit = Regex.Match(c.Title, @"\b\d{1,}-{0,1}\d{2,}\w{0,1}");
-    if (posibleNumbers.Any(x => x == adit.Value.Trim())) return true;
 
-    return false;
+
+
+
+static void SetUpdateScheduleTimer()
+{
+    ScheduleDownloader.CheckUpdate();
+    CoupleSchedule.Update(ScheduleDownloader.CacheDir);
+
+    var UpdateInterval = new TimeSpan(hours: 4, minutes: 5, seconds: 0);
+    var UpdateTimer = new System.Timers.Timer(UpdateInterval);
+    UpdateTimer.Elapsed += (s, e) => FullUpdate();
+
+    UpdateTimer.AutoReset = true;
+    UpdateTimer.Enabled = true;
+    UpdateTimer.Start();
+}
+
+static void FullUpdate()
+{
+    try
+    {
+        if (ScheduleDownloader.CheckUpdate())
+            CoupleSchedule.Update(ScheduleDownloader.CacheDir);
+    }
+    catch
+    {
+        Console.WriteLine("Error >> Не удалось обновить расписание.");
+    }
 }
