@@ -6,5 +6,11 @@ build:
 build-self-contained:
 	dotnet publish -p:PublishSingleFile=true -p:PublishTrimmed=true -r linux-x64 --self-contained=true -c Release
 
+publish-linux-arm64:
+	dotnet publish -p:PublishSingleFile=true -p:PublishTrimmed=true -r linux-arm64 --self-contained=true -c Release
+
+publish-win-x64:
+	dotnet publish -p:PublishSingleFile=true -p:PublishTrimmed=true -r win-x64 --self-contained=true -c Release
+
 test:
 	dotnet test
