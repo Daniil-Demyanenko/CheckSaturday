@@ -50,7 +50,7 @@ public static class TelegramBot
 
     private async static Task HandleUpdate(ITelegramBotClient TBClient, Update update, CancellationToken ct)
     {
-        if (!update.IsMessageType() || update?.Message?.Text == null) return;
+        if (!update.IsMessageType() || update?.Message?.Text == null) return; // Да, если тип апдейта -- Message, то не факт, что у него будет поле Message, и если есть поле, не факт, что у него будет поле Text. Очень крутая либа...
 
         var msg = update.Message.Text.ToLower().Trim();
 
@@ -63,6 +63,9 @@ public static class TelegramBot
                 await CheckCouples(update);
                 break;
         }
+
+        var f = update.Message.From;
+        Console.WriteLine($"TG_BOT >> Запрос от {f.FirstName} {f?.LastName} {f?.Username} || Текст: {update.Message.Text}\n");
 
         return;
     }
@@ -85,6 +88,7 @@ public static class TelegramBot
         }
 
         await TBClient.SendTextMessageAsync(update.GetChatID(), sb.ToString());
+
     }
 
     static bool ActualAuditNumber(ClassInfo c)

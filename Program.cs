@@ -3,8 +3,6 @@ using System.Threading;
 using CheckSaturday;
 
 
-
-
 if (args.Length != 1) throw new Exception("Не указан токен для бота.");
 SetUpdateScheduleTimer();
 
@@ -17,8 +15,6 @@ while (true)
     var key = Console.ReadKey();
     if (key.Key == ConsoleKey.Q) return;
 }
-
-
 
 
 

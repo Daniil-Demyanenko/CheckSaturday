@@ -63,7 +63,7 @@ public static class ScheduleDownloader
         foreach (var item in parsedLinks)
         {
             (string name, string link) = GetDirectLinkAsync(item.Item2).Result;
-            Console.WriteLine($"{name}\n{link}");
+            Console.WriteLine($"Обновление файла: {name}\n{link}");
             string extension = name.Split('.')[^1]; // получаем расширение файла (xls или xlsx)
             string filePath = CacheDir + item.Item1 + extension; // генерируем имя скачанного файла
             DownloadFromDirectLinkAsync(link, filePath).Wait(); // ждём окончания загрузки
