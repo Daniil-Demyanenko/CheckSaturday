@@ -18,9 +18,9 @@ while (true)
 
 
 
-static void SetUpdateScheduleTimer()
+static async void SetUpdateScheduleTimer()
 {
-    ScheduleDownloader.CheckUpdate();
+    await ScheduleDownloader.CheckUpdate();
     CoupleSchedule.Update(ScheduleDownloader.CacheDir);
 
     var UpdateInterval = new TimeSpan(hours: 4, minutes: 5, seconds: 0);
@@ -32,11 +32,11 @@ static void SetUpdateScheduleTimer()
     UpdateTimer.Start();
 }
 
-static void FullUpdate()
+static async void FullUpdate()
 {
     try
     {
-        if (ScheduleDownloader.CheckUpdate())
+        if (await ScheduleDownloader.CheckUpdate())
             CoupleSchedule.Update(ScheduleDownloader.CacheDir);
     }
     catch

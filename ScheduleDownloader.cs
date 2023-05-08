@@ -23,11 +23,11 @@ public static class ScheduleDownloader
     /// Скачивает расписания, если они могли устареть
     /// </summary>
     /// <returns>true, если обновил расписания</returns>
-    public static bool CheckUpdate()
+    public static async Task<bool> CheckUpdate()
     {
         if (CacheIsRelevant()) return false;
-        
-        Download();
+
+        await Download();
         return true;
     }
 
@@ -50,29 +50,30 @@ public static class ScheduleDownloader
         for (int i = 0; i < dirFiles.Length; i++)
         {
             var fileWriteDate = File.GetLastWriteTime(dirFiles[i]);
-            if ((DateTime.Now - fileWriteDate).TotalHours > 4) return false;
+            if ((DateTime.Now - fileWriteDate).TotalHours >= 4) return false;
         }
 
         return true;
-
     }
 
-    private static void Download()
+    private static async Task Download()
     {
-        var parsedLinks = ParseLinkFromPage();
+        var parsedLinks = await ParseLinkFromPage();
         foreach (var item in parsedLinks)
         {
             (string name, string link) = GetDirectLinkAsync(item.Item2).Result;
-            Console.WriteLine($"Обновление файла: {name}\n{link}");
+            Console.WriteLine($"DOWNLOADER >> Обновление файла: {name}\n{link}");
+
             string extension = name.Split('.')[^1]; // получаем расширение файла (xls или xlsx)
             string filePath = CacheDir + item.Item1 + extension; // генерируем имя скачанного файла
+
             DownloadFromDirectLinkAsync(link, filePath).Wait(); // ждём окончания загрузки
         }
     }
 
-    private static List<(string, string)> ParseLinkFromPage()
+    private static async Task<List<(string, string)>> ParseLinkFromPage()
     {
-        var link = LoadPage(@"https://lgpu.org/elektronnyy-resurs-distancionnogo-obucheniya-ifmit.html");
+        var link = await LoadPage(@"https://lgpu.org/elektronnyy-resurs-distancionnogo-obucheniya-ifmit.html");
         var document = new HtmlDocument();
         document.LoadHtml(link);
         List<(string, string)> links = new();
@@ -84,34 +85,23 @@ public static class ScheduleDownloader
                 links.Add((_sceduleNames[i], xpathLink[0].GetAttributeValue("href", "")));
                 continue;
             }
-
         }
 
         return links;
     }
 
-    private static string LoadPage(string url) //Тут происходит какая то чёрная магия, в которой я не разобрался. Оно работает - и хуй с ним
+    private static async Task<string> LoadPage(string url)
     {
-        var result = "";
-        var request = (HttpWebRequest)WebRequest.Create(url);
-        using var response = (HttpWebResponse)request.GetResponse();
+        string result = string.Empty;
 
-        if (response.StatusCode == HttpStatusCode.OK)
+        using HttpClient client = new HttpClient();
+        using HttpResponseMessage response = await client.GetAsync(url);
+
+        if (response.IsSuccessStatusCode)
         {
-            var receiveStream = response.GetResponseStream();
-            if (receiveStream != null)
-            {
-                StreamReader readStream;
-                if (response.CharacterSet == null)
-                {
-                    readStream = new StreamReader(receiveStream);
-                }
-                else readStream = new StreamReader(receiveStream, Encoding.GetEncoding(response.CharacterSet));
-                result = readStream.ReadToEnd();
-                readStream.Close();
-            }
-            response.Close();
+            result = await response.Content.ReadAsStringAsync();
         }
+
         return result;
     }
 
@@ -120,13 +110,27 @@ public static class ScheduleDownloader
         using var request = new HttpRequestMessage(HttpMethod.Get, $"https://cloud-api.yandex.net/v1/disk/public/resources?public_key={url}");
         using var response = await _client.SendAsync(request);
         response.EnsureSuccessStatusCode();
+
         dynamic result = JsonConvert.DeserializeObject(await response.Content.ReadAsStringAsync());
         return (result.name, result.file);
     }
 
     private static async Task DownloadFromDirectLinkAsync(string url, string path)
     {
-        using WebClient webClient = new WebClient();
-        await webClient.DownloadFileTaskAsync(new Uri(url), path);
+        using var httpClient = new HttpClient();
+
+        try
+        {
+            using var response = await httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+
+            using var stream = await response.Content.ReadAsStreamAsync();
+            using var fileStream = File.Create(path);
+            await stream.CopyToAsync(fileStream);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"DOWNLOADER >> Ошибка при загрузке файла: {e.Message}");
+        }
     }
 }
