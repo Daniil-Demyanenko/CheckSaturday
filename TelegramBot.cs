@@ -20,11 +20,11 @@ namespace CheckSaturday;
 public static class TelegramBot
 {
     private static ITelegramBotClient TBClient;
-
+    
     public static async void Start(string token)
     {
         bool needToRestart = true;
-
+        
         while (true) // Небольшой костыль из-за странности работы либы. В документации решения не нашёл.
         {
             if (needToRestart)
@@ -50,7 +50,8 @@ public static class TelegramBot
 
     private async static Task HandleUpdate(ITelegramBotClient TBClient, Update update, CancellationToken ct)
     {
-        if (!update.IsMessageType() || update?.Message?.Text == null) return; // Да, если тип апдейта -- Message, то не факт, что у него будет поле Message, и если есть поле, не факт, что у него будет поле Text. Очень крутая либа...
+        if (!update.IsMessageType() || update?.Message?.Text == null) return; // Да, если тип апдейта -- Message, то не факт, что у него будет поле Message, 
+                                                                              // и если есть поле, не факт, что у него будет поле Text. Очень крутая либа...
 
         var msg = update.Message.Text.ToLower().Trim();
 
@@ -93,10 +94,10 @@ public static class TelegramBot
 
     static bool ActualAuditNumber(ClassInfo c)
     {
-        var posibleNumbers = new string[] { "152", "151", "153", "156" };
+        var posibleNumbers = new string[] { "151", "152", "153", "154", "155", "157", "156", "159" };
 
-        var adit = Regex.Match(c.Title, @"\b\d{1,}-{0,1}\d{2,}\w{0,1}$");
-        if (posibleNumbers.Any(x => x == adit.Value.Trim())) return true;
+        var audit = Regex.Match(c.Title, @"\b\d{1,}-{0,1}\d{2,}\w{0,1}$");
+        if (posibleNumbers.Any(x => x == audit.Value.Trim())) return true;
 
         return false;
     }
