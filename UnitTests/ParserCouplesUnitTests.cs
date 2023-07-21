@@ -119,10 +119,10 @@ public class ParserCouplesUnitTests
     //     Assert.Equal(25, POPT1.Count());
     // }
 
-    public static List<ClassInfo> GetCouples(string path)
+    private static List<ClassInfo> GetCouples(string path)
     {
-        using var IFMOIOT = new TemplateScheduleParser(path);
-        return IFMOIOT.Parse();
+        using var ifmoiot = new TemplateScheduleParser(path);
+        return ifmoiot.Couples;
     }
 }
 

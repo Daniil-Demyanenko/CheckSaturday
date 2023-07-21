@@ -73,9 +73,9 @@ public static class TelegramBot
 
     private static async Task CheckCouples(Update update)
     {
-        var saturdayCouples = CoupleSchedule.Couples.Where(x => x.Day.ToLower().Contains("субб") && ActualAuditNumber(x));
+        var saturdayCouples = Schedule.Couples.Where(x => x.Day.ToLower().Contains("субб") && ActualAuditNumber(x));
 
-        var maxDate = CoupleSchedule.Couples.Max(x => x.Date);
+        var maxDate = Schedule.Couples.Max(x => x.Date);
 
         StringBuilder sb = new($"Расписание актуально до: {maxDate.ToString("d")}\n");
 
