@@ -62,13 +62,13 @@ public class TemplateScheduleParser : IDisposable
 
     ~TemplateScheduleParser()
     {
-        this.Dispose();
+        Dispose();
     }
 
     public void Dispose()
     {
-        _sheet.Dispose();
-        _workbook.Dispose();
+        _sheet?.Dispose();
+        _workbook?.Dispose();
     }
 
     private void Parse()

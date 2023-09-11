@@ -1,7 +1,4 @@
 using System;
-using System.Text;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -9,8 +6,6 @@ using Telegram.Bot.Types.ReplyMarkups;
 using Telegram.Bot.Args;
 using Telegram.Bot.Exceptions;
 using System.Threading;
-using System.Text.RegularExpressions;
-using CheckSaturday.InstituteParsers;
 using Telegram.Bot.Types.Enums;
 
 namespace CheckSaturday;
@@ -43,7 +38,6 @@ public static class TelegramBot
                     {
                         Console.WriteLine($"Error >> Ошибка обработки сообщения: {e.Message}");
                         needToRestart = true;
-                        return;
                     }
                 }, HandleError);
             }
@@ -52,7 +46,7 @@ public static class TelegramBot
     }
 
 
-    private async static Task HandleUpdate(ITelegramBotClient TBClient, Update update, CancellationToken ct)
+    private static async Task HandleUpdate(ITelegramBotClient TBClient, Update update, CancellationToken ct)
     {
         if (!update.IsMessageType() || update?.Message?.Text == null)
             return; // Да, если тип апдейта -- Message, то не факт, что у него будет поле Message, 
@@ -63,7 +57,7 @@ public static class TelegramBot
         switch (msg)
         {
             case "/start":
-                await TBClient.SendTextMessageAsync(update.GetChatID(),
+                await TBClient.SendTextMessageAsync(update.GetChatId(),
                     "Возрадуйтесь! Теперь можно автоматизировано проверять, есть ли пары во втором корпусе!\n" +
                     "Напишите <i>/check</i> для проверки наличия пар в субботу на кафедре ИОТС", ParseMode.Html);
                 break;
@@ -75,52 +69,25 @@ public static class TelegramBot
         var f = update.Message.From;
         Console.WriteLine(
             $"TG_BOT >> Запрос от {f.FirstName} {f?.LastName} {f?.Username} || Текст: {update.Message.Text}\n");
-
-        return;
     }
 
     private static async Task CheckCouples(Update update)
     {
-        var saturdayCouples = Schedule.Couples.Where(x => x.Day.ToLower().Contains("субб") && ActualAuditNumber(x)
-            && x.Date >= DateTime.Now - TimeSpan.FromDays(1));
- 
-        var maxDate = Schedule.Couples.Max(x => x.Date);
-
-        StringBuilder sb = new($"Расписание актуально до: {maxDate.ToString("d")}.\n");
-
-        if (saturdayCouples.Count() == 0)
-            sb.Append("Пары ИФМОИОТ'а отсутствуют.\nДобби свободен.");
-        else
-        {
-            sb.Append("Найдены пары в субботу:\n");
-            foreach (var i in saturdayCouples)
-                sb.Append($"- - - - -\n{i.Date.ToString("d")} || {i.Time} || {i.Course}-{i.Group}\n{i.Title}\n\n");
-        }
-
-        await TBClient.SendTextMessageAsync(update.GetChatID(), sb.ToString());
+        var message = CouplesChecker.BuildMessage();
+        await TBClient.SendTextMessageAsync(update.GetChatId(), message);
     }
-
-    static bool ActualAuditNumber(ClassInfo c)
-    {
-        var posibleNumbers = new string[] { "151", "152", "153", "154", "155", "157", "156", "159" };
-
-        var audit = Regex.Match(c.Title, @"\b\d{1,}-{0,1}\d{2,}\w{0,1}$");
-        if (posibleNumbers.Any(x => x == audit.Value.Trim())) return true;
-
-        return false;
-    }
-
-    private static long GetChatID(this Update update)
+    
+    private static long GetChatId(this Update update)
     {
         if (update.IsCallbackType())
-            return update.CallbackQuery.Message.Chat.Id;
+            return update.CallbackQuery.Message!.Chat.Id;
         return update.Message.Chat.Id;
     }
 
-    private static bool IsMessageType(this Update update) => update.Type == Telegram.Bot.Types.Enums.UpdateType.Message;
+    private static bool IsMessageType(this Update update) => update.Type == UpdateType.Message;
 
     private static bool IsCallbackType(this Update update) =>
-        update.Type == Telegram.Bot.Types.Enums.UpdateType.CallbackQuery;
+        update.Type == UpdateType.CallbackQuery;
 
     private static void HandleError(ITelegramBotClient tbc, Exception e, CancellationToken ct)
     {
