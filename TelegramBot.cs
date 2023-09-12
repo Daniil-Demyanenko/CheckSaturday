@@ -68,7 +68,7 @@ public static class TelegramBot
 
         var f = update.Message.From;
         Console.WriteLine(
-            $"TG_BOT >> Запрос от {f.FirstName} {f?.LastName} {f?.Username} || Текст: {update.Message.Text}\n");
+            $"TG_BOT >> Запрос от {f?.FirstName} {f?.LastName} [@{f?.Username}] || Дата: {DateTime.Now}\n");
     }
 
     private static async Task CheckCouples(Update update)

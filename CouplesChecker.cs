@@ -12,7 +12,12 @@ public static class CouplesChecker
     public static string BuildMessage()
     {
         var maxDate = Schedule.Couples.Max(x => x.Date);
-        StringBuilder sb = new($"Расписание актуально до: {maxDate.ToString("d")}.\n");
+        StringBuilder sb = new($"Расписание актуально до {maxDate.ToString("d")}.\n\n");
+        if (maxDate.Date < DateTime.Now.Date)
+        {
+            sb.AppendLine("Кароче, опять не опубликовали вовремя новое расписание.");
+            return sb.ToString();
+        }
 
         var sortStartTime = new TimeOnly(16, 00);
         var weekdaysCouples = Schedule.Couples.Where(x =>
