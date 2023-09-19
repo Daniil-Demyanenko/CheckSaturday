@@ -23,21 +23,22 @@ public static class CouplesChecker
         var weekdaysCouples = Schedule.Couples.Where(x =>
             !x.Day.ToLower().Contains("субб") && ActualAuditNumber(x) &&
             GetTimeOfCouple(x.Time) >= sortStartTime).OrderBy(x => x.Date).ThenBy(x => GetTimeOfCouple(x.Time));
-        
-        var saturdayCouples = Schedule.Couples.Where(x => x.Day.ToLower().Contains("субб") && ActualAuditNumber(x));
+
+        var saturdayCouples = Schedule.Couples.Where(x => x.Day.ToLower().Contains("субб") && ActualAuditNumber(x))
+            .OrderBy(x => GetTimeOfCouple(x.Time));
 
         var saturdayInfo = FindCouples(saturdayCouples);
         var weekdaysInfo = FindCouples(weekdaysCouples);
 
         sb.AppendLine(!weekdaysInfo.Any()
-            ? "Хз, чё там с парами после 17:00 в рабочие дни. Может есть, может нет. Я не нашёл у ИФМОИОТа."
+            ? "Хз, чё там с парами после 17:00 в рабочие дни. Может есть, может нет. Я не нашёл у ИФМОИОТа.\n"
             : "Нашёл пары после 17:00 в рабочие дни:\n");
         foreach (var i in weekdaysInfo)
             sb.AppendLine(i);
 
         sb.Append(!saturdayInfo.Any()
             ? "\nПары ИФМОИОТ'а на субботу отсутствуют.\nИнженерка, спи спокойно."
-            : "Найдены пары в субботу:\n");
+            : "Найдены пары ИФМОИОТа в субботу:\n");
         foreach (var i in saturdayInfo)
             sb.AppendLine(i);
 
@@ -59,7 +60,7 @@ public static class CouplesChecker
     private static TimeOnly GetTimeOfCouple(string time)
     {
         string startTime = time.Split('-', StringSplitOptions.RemoveEmptyEntries)[0];
-        var separatedTime = startTime.Split(":.;".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+        var separatedTime = startTime.Split(".,:;".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
 
         int.TryParse(separatedTime[0], out int hours);
         int.TryParse(separatedTime[1], out int minutes);
