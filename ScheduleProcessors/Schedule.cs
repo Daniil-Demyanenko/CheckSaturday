@@ -9,26 +9,26 @@ namespace CheckSaturday.ScheduleProcessors;
 /// <summary>
 /// Глобальное расписание пар университета
 /// </summary>
-public static class Schedule
+public class Schedule
 {
     /// <summary>
     /// Список пар всех институтов
     /// </summary>
-    public static IEnumerable<ClassInfo> Couples => _couples;
+    public IEnumerable<ClassInfo> Couples => _couples;
     /// <summary>
     /// Список всех учебных групп
     /// </summary>
-    public static IEnumerable<StudyGroup> StudyGroups => _studyGroups;
+    public IEnumerable<StudyGroup> StudyGroups => _studyGroups;
 
-    private static List<StudyGroup> _studyGroups;
-    private static List<ClassInfo> _couples;
+    private List<StudyGroup> _studyGroups;
+    private List<ClassInfo> _couples;
 
 
 
     /// <summary>
     /// Заново распарсить и заполнить данные о расписании
     /// </summary>
-    public static void Update(string cachePath)
+    public void Update(string cachePath)
     {
         var files = Directory.GetFiles(cachePath);
 
