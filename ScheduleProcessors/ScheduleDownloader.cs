@@ -1,14 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
 using Newtonsoft.Json;
-using System.Text;
-using System.Collections.Generic;
 
-namespace CheckSaturday;
+namespace CheckSaturday.ScheduleProcessors;
 
 public static class ScheduleDownloader
 {

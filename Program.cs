@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using CheckSaturday;
+using CheckSaturday.ScheduleProcessors;
 
 
 if (args.Length != 1) throw new Exception("Не указан токен для бота.");

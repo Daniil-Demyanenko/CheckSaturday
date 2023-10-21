@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using CheckSaturday.InstituteParsers;
 
-namespace CheckSaturday;
+namespace CheckSaturday.ScheduleProcessors;
 
 /// <summary>
 /// Глобальное расписание пар университета
