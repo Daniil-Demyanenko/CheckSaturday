@@ -7,7 +7,7 @@ using CheckSaturday.InstituteParsers;
 
 namespace CheckSaturday;
 
-public static class CouplesChecker
+public static class CouplesReport
 {
     public static string BuildMessage()
     {

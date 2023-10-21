@@ -73,7 +73,7 @@ public static class TelegramBot
 
     private static async Task CheckCouples(Update update)
     {
-        var message = CouplesChecker.BuildMessage();
+        var message = CouplesReport.BuildMessage();
         await TBClient.SendTextMessageAsync(update.GetChatId(), message);
     }
     
