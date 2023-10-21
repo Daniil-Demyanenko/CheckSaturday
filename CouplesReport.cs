@@ -25,7 +25,7 @@ public static class CouplesReport
             GetTimeOfCouple(x.Time) >= sortStartTime).OrderBy(x => x.Date).ThenBy(x => GetTimeOfCouple(x.Time));
 
         var saturdayCouples = Schedule.Couples.Where(x => x.Day.ToLower().Contains("субб") && ActualAuditNumber(x))
-            .OrderBy(x => GetTimeOfCouple(x.Time));
+            .OrderBy(x=>x.Date).ThenBy(x => GetTimeOfCouple(x.Time));
 
         var saturdayInfo = FindCouples(saturdayCouples);
         var weekdaysInfo = FindCouples(weekdaysCouples);
