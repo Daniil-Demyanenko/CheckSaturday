@@ -4,15 +4,16 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using CheckSaturday.InstituteParsers;
-using CheckSaturday.ScheduleProcessors;
 
 namespace CheckSaturday;
 
-public static class CouplesReport
+public class CouplesReport
 {
-    public static string BuildMessage()
+    public static string BuildMessage(IEnumerable<ClassInfo> Couples)
     {
-        var maxDate = Schedule.Couples.Max(x => x.Date);
+        if (!Couples.Any()) return "Пар не найдено.";
+        
+        var maxDate = Couples.Max(x => x.Date);
         StringBuilder sb = new($"Расписание актуально до {maxDate.ToString("d")}.\n\n");
         if (maxDate.Date < DateTime.Now.Date)
         {
@@ -20,16 +21,7 @@ public static class CouplesReport
             return sb.ToString();
         }
 
-        var sortStartTime = new TimeOnly(16, 00);
-        var weekdaysCouples = Schedule.Couples.Where(x =>
-            !x.Day.ToLower().Contains("субб") && ActualAuditNumber(x) &&
-            GetTimeOfCouple(x.Time) >= sortStartTime).OrderBy(x => x.Date).ThenBy(x => GetTimeOfCouple(x.Time));
-
-        var saturdayCouples = Schedule.Couples.Where(x => x.Day.ToLower().Contains("субб") && ActualAuditNumber(x))
-            .OrderBy(x=>x.Date).ThenBy(x => GetTimeOfCouple(x.Time));
-
-        var saturdayInfo = FindCouples(saturdayCouples);
-        var weekdaysInfo = FindCouples(weekdaysCouples);
+        var (saturdayInfo, weekdaysInfo) = FilterCouples(Couples);
 
         sb.AppendLine(!weekdaysInfo.Any()
             ? "Хз, чё там с парами после 17:00 в рабочие дни. Может есть, может нет. Я не нашёл у ИФМОИОТа.\n"
@@ -44,6 +36,19 @@ public static class CouplesReport
             sb.AppendLine(i);
 
         return sb.ToString();
+    }
+
+    private static (List<string> saturdays,List<string> weekdays) FilterCouples(IEnumerable<ClassInfo> Couples)
+    {
+        var sortStartTime = new TimeOnly(16, 00);
+        var weekdaysCouples = Couples.Where(x =>
+            !x.Day.ToLower().Contains("субб") && ActualAuditNumber(x) &&
+            GetTimeOfCouple(x.Time) >= sortStartTime).OrderBy(x => x.Date).ThenBy(x => GetTimeOfCouple(x.Time));
+
+        var saturdayCouples = Couples.Where(x => x.Day.ToLower().Contains("субб") && ActualAuditNumber(x))
+            .OrderBy(x=>x.Date).ThenBy(x => GetTimeOfCouple(x.Time));
+
+        return (FindCouples(saturdayCouples), FindCouples(weekdaysCouples));
     }
 
     private static List<string> FindCouples(IEnumerable<ClassInfo> couples)
@@ -75,7 +80,7 @@ public static class CouplesReport
 
     private static bool ActualAuditNumber(ClassInfo c)
     {
-        var possibleNumbers = new[] { "151", "152", "153", "154", "155", "156", "157", "159" };
+        var possibleNumbers = new[] { "151", "152", "153", "154", "155", "156", "157", "159"};
 
         var audit = Regex.Match(c.Title, @"\b\d{1,}-{0,1}\d{2,}\w{0,1}$");
         if (possibleNumbers.Any(x => x == audit.Value.Trim())) return true;
