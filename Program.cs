@@ -28,13 +28,13 @@ static async void SetUpdateScheduleTimer()
     await ScheduleDownloader.CheckUpdate();
     ScheduleStaticCover.Update(ScheduleDownloader.CacheDir);
 
-    var UpdateInterval = new TimeSpan(hours: ScheduleDownloader.HoursCacheIsActual, minutes: 5, seconds: 0);
-    var UpdateTimer = new System.Timers.Timer(UpdateInterval);
-    UpdateTimer.Elapsed += (s, e) => FullUpdate();
+    var updateInterval = new TimeSpan(hours: ScheduleDownloader.HoursCacheIsActual, minutes: 5, seconds: 0);
+    var updateTimer = new System.Timers.Timer(updateInterval);
+    updateTimer.Elapsed += (_, _) => FullUpdate();
 
-    UpdateTimer.AutoReset = true;
-    UpdateTimer.Enabled = true;
-    UpdateTimer.Start();
+    updateTimer.AutoReset = true;
+    updateTimer.Enabled = true;
+    updateTimer.Start();
 }
 
 static async void FullUpdate()

@@ -50,6 +50,6 @@ public class Schedule
 
         _couples = tempCouples;
         _studyGroups = tempStudyGroups;
-        Console.WriteLine($"Info >> Обновлено {_couples.Count} пар.");
+        Console.WriteLine($"Schedule Info >> Обновлено {_couples.Count} пар.");
     }
 }

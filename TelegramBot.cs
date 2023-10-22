@@ -1,11 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.ReplyMarkups;
-using Telegram.Bot.Args;
-using Telegram.Bot.Exceptions;
 using System.Threading;
+using CheckSaturday.ScheduleProcessors;
 using Telegram.Bot.Types.Enums;
 
 namespace CheckSaturday;
@@ -15,49 +15,70 @@ namespace CheckSaturday;
 /// </summary>
 public static class TelegramBot
 {
-    private static ITelegramBotClient TBClient;
+    private static ITelegramBotClient _tgClient = null;
 
-    public static async void Start(string token)
+    public static async Task Start(string token)
     {
-        bool needToRestart = true;
-
-        while (true) // Небольшой костыль из-за странности работы либы. В документации решения не нашёл.
+        while (true)
         {
-            if (needToRestart)
-            {
-                needToRestart = false;
+            await Task.Delay(1000);
+            _tgClient ??= new TelegramBotClient(token);
 
-                TBClient = new TelegramBotClient(token);
-                TBClient.StartReceiving(async (tbc, u, ct) =>
+            var updates = await _tgClient.GetUpdatesAsync();
+            if (updates.Length == 0) continue;
+            // Сбрасываем счётчик неполученных апдейтов
+            await _tgClient.GetUpdatesAsync(offset: updates.Max(x => x.Id) + 1);
+
+            var messages = updates.Where(x => x.IsMessageType());
+            // Документы, отправленные группой, будут обработаны вместе, иначе -- поотдельности
+            var documentGroups = updates.Where(x => x.IsDocumentType())
+                .GroupBy(x => x.Message?.MediaGroupId ?? x.Id.ToString());
+
+            foreach (var message in messages)
+            {
+                try
                 {
-                    try
-                    {
-                        await HandleUpdate(tbc, u, ct);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine($"Error >> Ошибка обработки сообщения: {e.Message}");
-                        needToRestart = true;
-                    }
-                }, HandleError);
+                    await HandleMessage(message);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"Error >> Ошибка обработки сообщения: {e.Message}\n{e.StackTrace}");
+                }
             }
-            else await Task.Delay(1000);
+
+            foreach (var document in documentGroups)
+            {
+                try
+                {
+                    await HandleDocuments(document);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"Error >> Ошибка обработки сообщения: {e.Message}\n{e.StackTrace}");
+                }
+            }
+
+            LogRequests(updates);
         }
     }
 
-
-    private static async Task HandleUpdate(ITelegramBotClient TBClient, Update update, CancellationToken ct)
+    // TODO: Съедобен ли формат документа
+    private static async Task HandleDocuments(IEnumerable<Update> updates)
     {
-        if (!update.IsMessageType() || update?.Message?.Text == null)
-            return; // Да, если тип апдейта -- Message, то не факт, что у него будет поле Message, 
-        // и если есть поле, не факт, что у него будет поле Text. Очень крутая либа...
+        var couples = await ScheduleFromTelegram.GetCouplesFromUpdates(updates, _tgClient);
+        string message = CouplesReport.BuildMessage(couples);
+        await _tgClient.SendTextMessageAsync(updates.First().GetChatId(),
+            message);
+    }
 
+    private static async Task HandleMessage(Update update)
+    {
         var msg = update.Message.Text.ToLower().Trim();
 
         switch (msg)
         {
             case "/start":
-                await TBClient.SendTextMessageAsync(update.GetChatId(),
+                await _tgClient.SendTextMessageAsync(update.GetChatId(),
                     "Возрадуйтесь! Теперь можно автоматизировано проверять, есть ли пары во втором корпусе!\n" +
                     "Напишите <i>/check</i> для проверки наличия пар в субботу на кафедре ИОТС", ParseMode.Html);
                 break;
@@ -65,29 +86,39 @@ public static class TelegramBot
                 await CheckCouples(update);
                 break;
         }
-
-        var f = update.Message.From;
-        Console.WriteLine(
-            $"TG_BOT >> Запрос от {f?.FirstName} {f?.LastName} [@{f?.Username}] || Дата: {DateTime.Now}\n");
     }
+
 
     private static async Task CheckCouples(Update update)
     {
-        var message = CouplesReport.BuildMessage();
-        await TBClient.SendTextMessageAsync(update.GetChatId(), message);
-    }
-    
-    private static long GetChatId(this Update update)
-    {
-        if (update.IsCallbackType())
-            return update.CallbackQuery.Message!.Chat.Id;
-        return update.Message.Chat.Id;
+        var message = CouplesReport.BuildMessage(ScheduleStaticCover.Couples);
+        await _tgClient.SendTextMessageAsync(update.GetChatId(), message);
     }
 
-    private static bool IsMessageType(this Update update) => update.Type == UpdateType.Message;
+    private static long GetChatId(this Update update)
+    {
+        return update.IsCallbackType() ? update.CallbackQuery.Message!.Chat.Id : update.Message.Chat.Id;
+    }
+
+    private static bool IsMessageType(this Update update) =>
+        update.Type == UpdateType.Message && update?.Message?.Text != null;
 
     private static bool IsCallbackType(this Update update) =>
         update.Type == UpdateType.CallbackQuery;
+
+    private static bool IsDocumentType(this Update update) =>
+        update?.Message?.Document is { MimeType: "application/vnd.ms-excel" };
+
+    private static void LogRequests(IEnumerable<Update> updates)
+    {
+        foreach (var update in updates)
+        {
+            var from = update.Message.From;
+            var date = update?.Message?.Date ?? DateTime.Now;
+            var type = update.IsDocumentType() ? "Документ" : "Запрос";
+            Console.WriteLine($"TG_BOT >> {type} от {from?.FirstName} {from?.LastName} [@{from?.Username}] || Дата: {date:g}\n");
+        }
+    }
 
     private static void HandleError(ITelegramBotClient tbc, Exception e, CancellationToken ct)
     {
