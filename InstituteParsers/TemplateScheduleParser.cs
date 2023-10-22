@@ -131,7 +131,7 @@ public class TemplateScheduleParser : IDisposable
         for (int i = _firstVisibleCell.Row; i < _maxDataRow; i++)
         {
             var cellValue = _sheet.Cells[i, 0].Value?.ToString()?.Trim();
-
+            
             if (cellValue is not null && //Ячейка имеет значение, содержит день недели, не является скрытой
                 IsContainDayOfWeek(cellValue) &&
                 !_sheet.Cells.Rows[i].IsHidden)
@@ -164,8 +164,9 @@ public class TemplateScheduleParser : IDisposable
             int classesCountOfDay = _sheet.Cells[day.Pos, 0].GetMergedRange().RowCount;
             for (int i = 0; i < classesCountOfDay; i++)
             {
-                int rowWithCouple = day.Pos + i;
-                if (_sheet.Cells.Rows[rowWithCouple].IsHidden) continue;
+                int rowWithCouple = day.Pos + i; 
+                // В директорате вместо скрытия ячеек начали их просто уменьшать, чтоб нельзя было что-то прочитать. Отсюда и такой костыль с высотой ячейки...
+                if (_sheet.Cells.Rows[rowWithCouple].IsHidden || _sheet.Cells.GetRowHeightPixel(rowWithCouple) <= 20) continue;
                 string? className = _sheet.Cells[rowWithCouple, col].Value?.ToString();
                 if (className is null) continue;
 
