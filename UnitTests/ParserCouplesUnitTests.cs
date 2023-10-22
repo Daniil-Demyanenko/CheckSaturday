@@ -81,6 +81,16 @@ public class ParserCouplesUnitTests
         int count = POMII1.Count();
         Assert.Equal(18, count);
     }
+    
+    [Fact]
+    public void ParsingTestOFOBAK4_CoupleCountWithoutSmallRows()
+    {
+        var couples = GetCouples(Paths.OFOBAK4);
+        var POMII1 = couples.Where(x => x.Course == 1 && x.Group == "ПО (ФиМ)");
+
+        int count = POMII1.Count();
+        Assert.Equal(20, count);
+    }
 
     [Fact]
     public void ParsingTestZFOMAG_GroupCount()
