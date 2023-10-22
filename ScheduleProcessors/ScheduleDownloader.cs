@@ -11,6 +11,10 @@ namespace CheckSaturday.ScheduleProcessors;
 public static class ScheduleDownloader
 {
     /// <summary>
+    /// Сколько часов расписания считаются актуальными
+    /// </summary>
+    public const int HoursCacheIsActual = 4;
+    /// <summary>
     /// Путь к дирректирии с расписаниями
     /// </summary>
     public static readonly string CacheDir = AppDomain.CurrentDomain.BaseDirectory + "/Cache"; //Путь к папке Cache в директории программы
@@ -48,7 +52,7 @@ public static class ScheduleDownloader
         for (int i = 0; i < dirFiles.Length; i++)
         {
             var fileWriteDate = File.GetLastWriteTime(dirFiles[i]);
-            if ((DateTime.Now - fileWriteDate).TotalHours >= 4) return false;
+            if ((DateTime.Now - fileWriteDate).TotalHours >= HoursCacheIsActual) return false;
         }
 
         return true;
