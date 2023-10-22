@@ -9,13 +9,13 @@ namespace CheckSaturday;
 
 public class CouplesReport
 {
-    public static string BuildMessage(IEnumerable<ClassInfo> Couples)
+    public static string BuildMessage(IEnumerable<ClassInfo> Couples, bool needBeActual)
     {
         if (!Couples.Any()) return "Пар не найдено.";
-        
+
         var maxDate = Couples.Max(x => x.Date);
         StringBuilder sb = new($"Расписание актуально до {maxDate.ToString("d")}.\n\n");
-        if (maxDate.Date < DateTime.Now.Date)
+        if (maxDate.Date < DateTime.Now.Date && needBeActual)
         {
             sb.AppendLine("Кароче, опять не опубликовали вовремя новое расписание.");
             return sb.ToString();
@@ -38,7 +38,7 @@ public class CouplesReport
         return sb.ToString();
     }
 
-    private static (List<string> saturdays,List<string> weekdays) FilterCouples(IEnumerable<ClassInfo> Couples)
+    private static (List<string> saturdays, List<string> weekdays) FilterCouples(IEnumerable<ClassInfo> Couples)
     {
         var sortStartTime = new TimeOnly(16, 00);
         var weekdaysCouples = Couples.Where(x =>
@@ -46,7 +46,7 @@ public class CouplesReport
             GetTimeOfCouple(x.Time) >= sortStartTime).OrderBy(x => x.Date).ThenBy(x => GetTimeOfCouple(x.Time));
 
         var saturdayCouples = Couples.Where(x => x.Day.ToLower().Contains("субб") && ActualAuditNumber(x))
-            .OrderBy(x=>x.Date).ThenBy(x => GetTimeOfCouple(x.Time));
+            .OrderBy(x => x.Date).ThenBy(x => GetTimeOfCouple(x.Time));
 
         return (FindCouples(saturdayCouples), FindCouples(weekdaysCouples));
     }
@@ -80,7 +80,7 @@ public class CouplesReport
 
     private static bool ActualAuditNumber(ClassInfo c)
     {
-        var possibleNumbers = new[] { "151", "152", "153", "154", "155", "156", "157", "159"};
+        var possibleNumbers = new[] { "151", "152", "153", "154", "155", "156", "157", "159" };
 
         var audit = Regex.Match(c.Title, @"\b\d{1,}-{0,1}\d{2,}\w{0,1}$");
         if (possibleNumbers.Any(x => x == audit.Value.Trim())) return true;

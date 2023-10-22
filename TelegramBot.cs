@@ -65,10 +65,19 @@ public static class TelegramBot
     // TODO: Съедобен ли формат документа
     private static async Task HandleDocuments(IEnumerable<Update> updates)
     {
-        var couples = await ScheduleFromTelegram.GetCouplesFromUpdates(updates, _tgClient);
-        string message = CouplesReport.BuildMessage(couples);
-        await _tgClient.SendTextMessageAsync(updates.First().GetChatId(),
-            message);
+        string message;
+        await _tgClient.SendTextMessageAsync(updates.First().GetChatId(), "Словил доки.");
+        try
+        {
+            var couples = await ScheduleFromTelegram.GetCouplesFromUpdates(updates, _tgClient);
+            message = CouplesReport.BuildMessage(couples, needBeActual: false);
+        }
+        catch
+        {
+            message = "Документ несъедобен или реально пар нет...";
+        }
+
+        await _tgClient.SendTextMessageAsync(updates.First().GetChatId(), message);
     }
 
     private static async Task HandleMessage(Update update)
@@ -91,7 +100,7 @@ public static class TelegramBot
 
     private static async Task CheckCouples(Update update)
     {
-        var message = CouplesReport.BuildMessage(ScheduleStaticCover.Couples);
+        var message = CouplesReport.BuildMessage(ScheduleStaticCover.Couples, needBeActual: true);
         await _tgClient.SendTextMessageAsync(update.GetChatId(), message);
     }
 
@@ -107,7 +116,7 @@ public static class TelegramBot
         update.Type == UpdateType.CallbackQuery;
 
     private static bool IsDocumentType(this Update update) =>
-        update?.Message?.Document is { MimeType: "application/vnd.ms-excel" };
+        update?.Message?.Document is { MimeType: "application/vnd.ms-excel" or "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"};
 
     private static void LogRequests(IEnumerable<Update> updates)
     {

@@ -22,11 +22,13 @@ public class ScheduleFromTelegram
 
         foreach (var update in updates)
             await DownloadFile(update, TBClient, dirPath);
-
+        
         var schedule = new Schedule();
         schedule.Update(dirPath);
         
         Directory.Delete(dirPath, recursive: true);
+
+        if (!schedule.Couples.Any()) throw new Exception("No couples found.");
         return schedule.Couples;
     }
 
