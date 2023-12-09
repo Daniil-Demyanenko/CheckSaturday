@@ -21,44 +21,51 @@ public static class TelegramBot
     {
         while (true)
         {
-            await Task.Delay(1000);
-            _tgClient ??= new TelegramBotClient(token);
-
-            var updates = await _tgClient.GetUpdatesAsync();
-            if (updates.Length == 0) continue;
-            // Сбрасываем счётчик неполученных апдейтов
-            await _tgClient.GetUpdatesAsync(offset: updates.Max(x => x.Id) + 1);
-
-            var messages = updates.Where(x => x.IsMessageType());
-            // Документы, отправленные группой, будут обработаны вместе, иначе -- поотдельности
-            var documentGroups = updates.Where(x => x.IsDocumentType())
-                .GroupBy(x => x.Message?.MediaGroupId ?? x.Id.ToString());
-
-            foreach (var message in messages)
+            try
             {
-                try
-                {
-                    await HandleMessage(message);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"Error >> Ошибка обработки сообщения: {e.Message}\n{e.StackTrace}");
-                }
-            }
+                await Task.Delay(1000);
+                _tgClient ??= new TelegramBotClient(token);
 
-            foreach (var document in documentGroups)
+                var updates = await _tgClient.GetUpdatesAsync();
+                if (updates.Length == 0) continue;
+                // Сбрасываем счётчик неполученных апдейтов
+                await _tgClient.GetUpdatesAsync(offset: updates.Max(x => x.Id) + 1);
+
+                var messages = updates.Where(x => x.IsMessageType());
+                // Документы, отправленные группой, будут обработаны вместе, иначе -- поотдельности
+                var documentGroups = updates.Where(x => x.IsDocumentType())
+                    .GroupBy(x => x.Message?.MediaGroupId ?? x.Id.ToString());
+
+                foreach (var message in messages)
+                {
+                    try
+                    {
+                        await HandleMessage(message);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($"Error >> Ошибка обработки сообщения: {e.Message}\n{e.StackTrace}");
+                    }
+                }
+
+                foreach (var document in documentGroups)
+                {
+                    try
+                    {
+                        await HandleDocuments(document);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($"Error >> Ошибка обработки сообщения: {e.Message}\n{e.StackTrace}");
+                    }
+                }
+
+                LogRequests(updates);
+            }
+            catch (Exception e)
             {
-                try
-                {
-                    await HandleDocuments(document);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"Error >> Ошибка обработки сообщения: {e.Message}\n{e.StackTrace}");
-                }
+                Console.WriteLine($"Error [{DateTime.Now:G}] >> Ошибка TGBot.Start(): {e.Message}\n{e.StackTrace}");
             }
-
-            LogRequests(updates);
         }
     }
 
@@ -116,7 +123,7 @@ public static class TelegramBot
         update.Type == UpdateType.CallbackQuery;
 
     private static bool IsDocumentType(this Update update) =>
-        update?.Message?.Document is { MimeType: "application/vnd.ms-excel" or "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"};
+        update?.Message?.Document is { MimeType: "application/vnd.ms-excel" or "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" };
 
     private static void LogRequests(IEnumerable<Update> updates)
     {

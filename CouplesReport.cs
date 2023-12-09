@@ -7,21 +7,21 @@ using CheckSaturday.InstituteParsers;
 
 namespace CheckSaturday;
 
-public class CouplesReport
+public static class CouplesReport
 {
-    public static string BuildMessage(IEnumerable<ClassInfo> Couples, bool needBeActual)
+    public static string BuildMessage(IEnumerable<ClassInfo> couples, bool needBeActual)
     {
-        if (!Couples.Any()) return "Пар не найдено.";
+        if (!couples.Any()) return "Пар не найдено.";
 
-        var maxDate = Couples.Max(x => x.Date);
-        StringBuilder sb = new($"Расписание актуально до {maxDate.ToString("d")}.\n\n");
+        var maxDate = couples.Max(x => x.Date);
+        StringBuilder sb = new($"Расписание актуально до {maxDate:d}.\n\n");
         if (maxDate.Date < DateTime.Now.Date && needBeActual)
         {
             sb.AppendLine("Кароче, опять не опубликовали вовремя новое расписание.");
             return sb.ToString();
         }
 
-        var (saturdayInfo, weekdaysInfo) = FilterCouples(Couples);
+        var (saturdayInfo, weekdaysInfo) = FilterCouples(couples);
 
         sb.AppendLine(!weekdaysInfo.Any()
             ? "Хз, чё там с парами после 17:00 в рабочие дни. Может есть, может нет. Я не нашёл у ИФМОИОТа.\n"
