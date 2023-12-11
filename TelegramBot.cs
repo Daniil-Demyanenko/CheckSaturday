@@ -15,7 +15,7 @@ namespace CheckSaturday;
 /// </summary>
 public static class TelegramBot
 {
-    private static ITelegramBotClient _tgClient = null;
+    private static ITelegramBotClient _tgClient;
 
     public static async Task Start(string token)
     {
@@ -65,6 +65,7 @@ public static class TelegramBot
             catch (Exception e)
             {
                 Console.WriteLine($"Error [{DateTime.Now:G}] >> Ошибка TGBot.Start(): {e.Message}\n{e.StackTrace}");
+                _tgClient = null;
             }
         }
     }
@@ -117,7 +118,7 @@ public static class TelegramBot
     }
 
     private static bool IsMessageType(this Update update) =>
-        update.Type == UpdateType.Message && update?.Message?.Text != null;
+        update.Type == UpdateType.Message && update.Message?.Text != null;
 
     private static bool IsCallbackType(this Update update) =>
         update.Type == UpdateType.CallbackQuery;
@@ -129,15 +130,10 @@ public static class TelegramBot
     {
         foreach (var update in updates)
         {
-            var from = update.Message.From;
-            var date = update?.Message?.Date ?? DateTime.Now;
+            var from = update.Message?.From;
+            var date = DateTime.Now;
             var type = update.IsDocumentType() ? "Документ" : "Запрос";
             Console.WriteLine($"TG_BOT >> {type} от {from?.FirstName} {from?.LastName} [@{from?.Username}] || Дата: {date:g}\n");
         }
-    }
-
-    private static void HandleError(ITelegramBotClient tbc, Exception e, CancellationToken ct)
-    {
-        Console.WriteLine($"Error >> Ошибка бота: {e.Message}");
     }
 }
