@@ -14,12 +14,14 @@ public static class ScheduleDownloader
     /// Сколько часов расписания считаются актуальными
     /// </summary>
     public const int HoursCacheIsActual = 4;
+
     /// <summary>
     /// Путь к дирректирии с расписаниями
     /// </summary>
     public static readonly string CacheDir = AppDomain.CurrentDomain.BaseDirectory + "/Cache"; //Путь к папке Cache в директории программы
+
     private static readonly HttpClient _client = new HttpClient();
-    private static string[] _sceduleNames = { "/ИФМОИОТ_ОФО_БАК.", "/ИФМОИОТ_ЗФО_БАК.", "/ИФМОИОТ_ОФО_МАГ.", "/ИФМОИОТ_ЗФО_МАГ." };
+    private static readonly string[] _scheduleNames = { "/ИФМОИОТ_ОФО_БАК.", "/ИФМОИОТ_ЗФО_БАК.", "/ИФМОИОТ_ОФО_МАГ.", "/ИФМОИОТ_ЗФО_МАГ." };
 
     /// <summary>
     /// Скачивает расписания, если они могли устареть
@@ -35,7 +37,6 @@ public static class ScheduleDownloader
 
     private static bool CacheIsRelevant()
     {
-
         if (!Directory.Exists(CacheDir))
         {
             Directory.CreateDirectory(CacheDir);
@@ -79,13 +80,12 @@ public static class ScheduleDownloader
         var document = new HtmlDocument();
         document.LoadHtml(link);
         List<(string, string)> links = new();
-        for (int i = 0; i < 4; i++) //Перебираем со 2 по 5 ячейку в таблице расписаний
+        for (int i = 2; i <= 5; i++) //Перебираем со 2 по 4 ячейку в таблице расписаний
         {
-            HtmlNodeCollection xpathLink = document.DocumentNode.SelectNodes($"//tr[3]/td[{i + 2}]/p/a");
+            HtmlNodeCollection xpathLink = document.DocumentNode.SelectNodes($"/html/body/div[2]/div[4]/div/div[2]/article/div[1]/table/tbody/tr[3]/td[{i}]/a");
             if (xpathLink != null)
             {
-                links.Add((_sceduleNames[i], xpathLink[0].GetAttributeValue("href", "")));
-                continue;
+                links.Add((_scheduleNames[i - 2], xpathLink[0].GetAttributeValue("href", "")));
             }
         }
 
@@ -95,9 +95,7 @@ public static class ScheduleDownloader
     private static async Task<string> LoadPage(string url)
     {
         string result = string.Empty;
-
-        using HttpClient client = new HttpClient();
-        using HttpResponseMessage response = await client.GetAsync(url);
+        using HttpResponseMessage response = await _client.GetAsync(url);
 
         if (response.IsSuccessStatusCode)
         {

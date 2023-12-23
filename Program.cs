@@ -17,7 +17,15 @@ while (true)
     var key = Console.ReadKey();
     if (key.Key == ConsoleKey.Q)
     {
-        Directory.Delete(ScheduleFromTelegram.CachePath, true);
+        try
+        {
+            Directory.Delete(ScheduleFromTelegram.CachePath, true);
+        }
+        catch
+        {
+            Console.WriteLine("Main >> дирректория не была создана");
+        }
+
         return;
     }
 }
