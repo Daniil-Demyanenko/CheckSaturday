@@ -26,7 +26,7 @@ public static class ScheduleDownloader
     /// <summary>
     /// Скачивает расписания, если они могли устареть
     /// </summary>
-    /// <returns>true, если обновил расписания</returns>
+    /// <returns>True, если обновил расписания</returns>
     public static async Task<bool> CheckUpdate()
     {
         if (CacheIsRelevant()) return false;
@@ -124,8 +124,8 @@ public static class ScheduleDownloader
             using var response = await httpClient.GetAsync(url);
             response.EnsureSuccessStatusCode();
 
-            using var stream = await response.Content.ReadAsStreamAsync();
-            using var fileStream = File.Create(path);
+            await using var stream = await response.Content.ReadAsStreamAsync();
+            await using var fileStream = File.Create(path);
             await stream.CopyToAsync(fileStream);
         }
         catch (Exception e)

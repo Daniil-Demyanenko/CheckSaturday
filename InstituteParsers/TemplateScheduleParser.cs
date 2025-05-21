@@ -221,7 +221,7 @@ public class TemplateScheduleParser : IDisposable
     private (int, string) SplitGroupNameForMerged(int colWithGroup)
     {
         bool isSecondCell =
-            _sheet.Cells[_groupNameRow, colWithGroup].Value == null; // Является второй ячейкай в объединении?
+            _sheet.Cells[_groupNameRow, colWithGroup].Value == null; // Является второй ячейкой в объединении?
 
         if (isSecondCell) colWithGroup--;
 
